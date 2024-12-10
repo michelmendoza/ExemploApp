@@ -1,0 +1,49 @@
+name: CI Workflow
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    # Configuração inicial
+    - name: Checkout código
+      uses: actions/checkout@v3
+
+    # Configuração do Node.js
+    - name: Configurar Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: 16
+
+    # Instalar dependências
+    - name: Instalar dependências
+      run: yarn install
+
+    # Verificar código
+    - name: Verificar lint
+      run: yarn code:lint
+
+    # Rodar testes
+    - name: Executar testes para Android
+      run: yarn android.app
+
+    - name: Executar testes para iOS
+      run: yarn ios.app
+
+    # Gerar e publicar relatório Allure
+    - name: Gerar relatório Allure
+      run: yarn report:generate
+
+    - name: Upload relatório Allure
+      uses: actions/upload-artifact@v3
+      with:
+        name: allure-report
+        path: ./test-report/allure-report
