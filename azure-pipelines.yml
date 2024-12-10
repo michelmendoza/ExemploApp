@@ -1,49 +1,51 @@
-name: CI Workflow
-
-on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
+trigger:
+  branches:
+    include:
       - main
 
-jobs:
-  build-and-test:
-    runs-on: ubuntu-latest
+pool:
+  vmImage: 'ubuntu-latest'
 
-    steps:
-    # Configuração inicial
-    - name: Checkout código
-      uses: actions/checkout@v3
+steps:
+  # Etapa 1: Checkout do código
+  - task: Checkout@1
+    displayName: 'Checkout código'
 
-    # Configuração do Node.js
-    - name: Configurar Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: 16
+  # Etapa 2: Configurar Node.js
+  - task: UseNode@1
+    inputs:
+      version: '16.x'
+    displayName: 'Configurar Node.js'
 
-    # Instalar dependências
-    - name: Instalar dependências
-      run: yarn install
+  # Etapa 3: Instalar dependências
+  - script: |
+      yarn install
+    displayName: 'Instalar dependências'
 
-    # Verificar código
-    - name: Verificar lint
-      run: yarn code:lint
+  # Etapa 4: Verificar lint
+  - script: |
+      yarn code:lint
+    displayName: 'Verificar lint'
 
-    # Rodar testes
-    - name: Executar testes para Android
-      run: yarn android.app
+  # Etapa 5: Executar testes para Android
+  - script: |
+      yarn android.app
+    displayName: 'Executar testes para Android'
 
-    - name: Executar testes para iOS
-      run: yarn ios.app
+  # Etapa 6: Executar testes para iOS
+  - script: |
+      yarn ios.app
+    displayName: 'Executar testes para iOS'
 
-    # Gerar e publicar relatório Allure
-    - name: Gerar relatório Allure
-      run: yarn report:generate
+  # Etapa 7: Gerar relatório Allure
+  - script: |
+      yarn report:generate
+    displayName: 'Gerar relatório Allure'
 
-    - name: Upload relatório Allure
-      uses: actions/upload-artifact@v3
-      with:
-        name: allure-report
-        path: ./test-report/allure-report
+  # Etapa 8: Publicar artefato Allure
+  - task: PublishPipelineArtifact@1
+    inputs:
+      targetPath: 'test-report/allure-report'
+      artifactName: 'AllureReport'
+      publishLocation: 'pipeline'
+    displayName: 'Publicar relatório Allure'
