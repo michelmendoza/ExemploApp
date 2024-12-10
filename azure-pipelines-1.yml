@@ -1,20 +1,74 @@
-# Android
-# Build your Android project with Gradle.
-# Add steps that test, sign, and distribute the APK, save build artifacts, and more:
-# https://docs.microsoft.com/azure/devops/pipelines/languages/android
-
 trigger:
 - main
 
 pool:
   vmImage: 'macos-latest'
 
+variables:
+  ANDROID_SDK_ROOT: '/Users/runner/Library/Android/sdk'
+
 steps:
+# Configuração inicial
+- task: UsePythonVersion@0
+  inputs:
+    versionSpec: '3.x'
+    addToPath: true
+
+- task: NodeTool@0
+  inputs:
+    versionSpec: '16.x'
+    checkLatest: true
+
+# Instalar dependências do projeto
+- script: |
+    npm install
+  displayName: 'Install dependencies'
+
+# Build do aplicativo Android
 - task: Gradle@2
   inputs:
-    workingDirectory: ''
     gradleWrapperFile: 'gradlew'
     gradleOptions: '-Xmx3072m'
     publishJUnitResults: false
     testResultsFiles: '**/TEST-*.xml'
     tasks: 'assembleDebug'
+  displayName: 'Build Android App'
+
+# Configuração do emulador Android
+- task: Bash@3
+  inputs:
+    targetType: 'inline'
+    script: |
+      echo "Configuring Android Emulator"
+      echo "hw.lcd.width=1080" >> ~/.android/avd/Pixel_4_API_30.avd/config.ini
+      echo "hw.lcd.height=1920" >> ~/.android/avd/Pixel_4_API_30.avd/config.ini
+
+- task: Bash@3
+  inputs:
+    targetType: 'inline'
+    script: |
+      echo "Starting Android Emulator"
+      $ANDROID_HOME/emulator/emulator -avd Pixel_4_API_30 -no-boot-anim -no-audio -gpu swiftshader_indirect &
+    displayName: 'Start Android Emulator'
+
+# Executar testes com WebdriverIO, Appium e Cucumber
+- script: |
+    npx wdio ./config/wdio.android.app.conf.js
+  displayName: 'Run Tests'
+
+# Gerar relatórios Allure
+- script: |
+    yarn report:generate
+  displayName: 'Generate Allure Report'
+
+- script: |
+    yarn report:open
+  displayName: 'Open Allure Report'
+
+# Publicar artefatos e relatórios
+- task: PublishPipelineArtifact@1
+  inputs:
+    targetPath: 'test-report/allure-report'
+    artifactName: 'AllureReport'
+    publishLocation: 'pipeline'
+  displayName: 'Publish Allure Report Artifact'
