@@ -10,6 +10,12 @@ variables:
 
 steps:
 # Configuração inicial
+ 
+- script: |
+    curl -sL https://www.python.org/ftp/python/3.13.1/python-3.13.1.exe -o python-installer.exe
+    python-installer.exe /quiet InstallAllUsers=1 PrependPath=1
+  displayName: 'Install Python Manually'
+
 - task: UsePythonVersion@0
   inputs:
     versionSpec: '3.x'
