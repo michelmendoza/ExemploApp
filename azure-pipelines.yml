@@ -6,46 +6,49 @@ trigger:
 pool:
   vmImage: 'ubuntu-latest'
 
-steps:
-  # Etapa 1: Checkout do código
-  - task: Checkout@1
-    displayName: 'Checkout código'
+jobs:
+  - job: BuildAndTest
+    displayName: 'Build and Test Job'
+    steps:
+      # Etapa 1: Checkout do código
+      - task: Checkout@1
+        displayName: 'Checkout código'
 
-  # Etapa 2: Configurar Node.js
-  - task: UseNode@1
-    inputs:
-      version: '16.x'
-    displayName: 'Configurar Node.js'
+      # Etapa 2: Configurar Node.js
+      - task: UseNode@1
+        inputs:
+          version: '16.x'
+        displayName: 'Configurar Node.js'
 
-  # Etapa 3: Instalar dependências
-  - script: |
-      yarn install
-    displayName: 'Instalar dependências'
+      # Etapa 3: Instalar dependências
+      - script: |
+          yarn install
+        displayName: 'Instalar dependências'
 
-  # Etapa 4: Verificar lint
-  - script: |
-      yarn code:lint
-    displayName: 'Verificar lint'
+      # Etapa 4: Verificar lint
+      - script: |
+          yarn code:lint
+        displayName: 'Verificar lint'
 
-  # Etapa 5: Executar testes para Android
-  - script: |
-      yarn android.app
-    displayName: 'Executar testes para Android'
+      # Etapa 5: Executar testes para Android
+      - script: |
+          yarn android.app
+        displayName: 'Executar testes para Android'
 
-  # Etapa 6: Executar testes para iOS
-  - script: |
-      yarn ios.app
-    displayName: 'Executar testes para iOS'
+      # Etapa 6: Executar testes para iOS
+      - script: |
+          yarn ios.app
+        displayName: 'Executar testes para iOS'
 
-  # Etapa 7: Gerar relatório Allure
-  - script: |
-      yarn report:generate
-    displayName: 'Gerar relatório Allure'
+      # Etapa 7: Gerar relatório Allure
+      - script: |
+          yarn report:generate
+        displayName: 'Gerar relatório Allure'
 
-  # Etapa 8: Publicar artefato Allure
-  - task: PublishPipelineArtifact@1
-    inputs:
-      targetPath: 'test-report/allure-report'
-      artifactName: 'AllureReport'
-      publishLocation: 'pipeline'
-    displayName: 'Publicar relatório Allure'
+      # Etapa 8: Publicar relatório Allure
+      - task: PublishPipelineArtifact@1
+        inputs:
+          targetPath: 'test-report/allure-report'
+          artifactName: 'AllureReport'
+          publishLocation: 'pipeline'
+        displayName: 'Publicar relatório Allure'
